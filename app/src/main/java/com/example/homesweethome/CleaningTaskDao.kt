@@ -16,7 +16,7 @@ interface CleaningTaskDao {
     fun insertAll(cleaningTasks: List<CleaningTask>)
 
     @Query("SELECT * FROM cleaning_tasks WHERE assignedDate = :date")
-    fun getTasksByDate(date: String): List<CleaningTask>
+    fun getTasksByDate(date: String): Flow<List<CleaningTask>>
 
     @Query("SELECT * FROM cleaning_tasks")
     fun getAllTasks(): Flow<List<CleaningTask>>

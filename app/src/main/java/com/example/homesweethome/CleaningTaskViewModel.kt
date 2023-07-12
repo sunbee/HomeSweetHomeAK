@@ -1,29 +1,48 @@
 package com.example.homesweethome
 
 import android.util.Log
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 
 class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : ViewModel() {
 
     private val TAG = "VIEW_MODEL"
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
 
     /*
-    * SUB-SYSTEM: Populate DB
-    * Take the list of items in Group A and replicate each item 10 times.
-    * Then take the list of items in Group B and replicate each item 4 times.
-    * Merge both lists. You should now have a list of 120 items (10 x 10 + 5 x 4).
-    * Separately, generate a list of 30 dates, one for each day from today plus 1.
-    * Now replicate each date 4 times, so you have a list of 120. Now you have two lists.
-    * Assign a random date from the second list (120 dates = 30x4) to each item in the 1st list
-    * (120 tasks = 10X10 + 5x4) to prepare a list of 120 entities to put in DB.
+    * EVENT-HANDLER:
+    * WHEN button RESET clicked THEN populate Room DB afresh
+    *
+    * WHEN button RESET clicked.. (click event)
+    *   Create a 30-day schedule with 4 tasks each day (4 x 30 = 120).
+    *   The task frequency is a mix of daily and weekly tasks,
+    *   with daily tasks repeated every 3 days and weekly tasks repeated every 7 days.
+    *   Take the list of daily tasks (Group A) and replicate each item 10 times.
+    *   Then take the list of weekly tasks (Group B) and replicate each item 4 times.
+    *   Merge both lists. You should now have a list of 120 items (10 x 10 + 5 x 4).
+    *   Separately, generate a list of 30 dates, one for each day from today plus 1.
+    *   Now replicate each date 4 times, so you have a list of 120. Now you have two lists.
+    *   Assign a random date from the second list (120 dates = 30x4) to each item in the 1st list
+    *   (120 tasks = 10X10 + 5x4) to prepare a list of 120 scheduled cleaning tasks to put in DB.
+    * THEN populate Room DB afresh.. (DB ops)
+    *   populateDatabase() wraps around Dao function (C)RUD
+    *   generateCleaningTasks() implements business logic to schedule tasks
+    *
+    * Actors:
+    *   groupATasks
+    *   groupBTasks
     *
     * */
     private val groupATasks = listOf(
@@ -82,7 +101,7 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
         tasksList120.shuffle()
         for (i in tasksList120.indices) {
             val randomIndex = i % dates.size
-            val assignedDate = dates[randomIndex].time // Get the Date object from Calendar
+            val assignedDate = dateFormat.format(dates[randomIndex].time) // Get the Date object from Calendar
             Log.d(TAG, "${i.toLong()}, ${tasksList120[i]}, ${assignedDate.toString()}")
             allTasks.add(CleaningTask(i.toLong(), tasksList120[i], "Group A", assignedDate.toString()))
         }
@@ -106,6 +125,7 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
 
     init {
         observeIncompleteTasks()
+        observeIncompleteTasksTodayChanges()
     }
 
     private fun observeIncompleteTasks() {
@@ -116,6 +136,39 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
         }
     }
 
+    /*
+    * EVENT-HANDLER
+    * WHEN button TODAY clicked
+    * THEN fetch today's incomplete cleaning tasks to show in UI
+    * */
+    private val _selectedListToShow = MutableStateFlow<List<CleaningTask>>(emptyList())
+    val selectedListToShow: StateFlow<List<CleaningTask>> = _selectedListToShow
+    fun setListToShow(option: String) {
+        _selectedListToShow.value = when (option) {
+            "ALL" -> _incompleteTasks.value
+            "TODAY" -> _incompleteTasksToday.value
+            else -> emptyList()
+        }
+    }
+
+    private val _incompleteTasksToday = MutableStateFlow<List<CleaningTask>>(emptyList())
+    val incompleteTasksToday: StateFlow<List<CleaningTask>> = _incompleteTasksToday.asStateFlow()
+
+    fun observeIncompleteTasksTodayChanges() {
+        val calendar = Calendar.getInstance()
+        val today = dateFormat.format(calendar.time)
+        viewModelScope.launch {
+            cleaningTaskDao.getTasksByDate(today)
+                .map { tasks ->
+                    tasks.filter { !it.isCompleted }
+                }
+                .collect { filteredTasks ->
+                    _incompleteTasksToday.update { filteredTasks }
+                    Log.d(TAG,"Today's tasks ${incompleteTasksToday.value}")
+                }
+        }
+        Log.d(TAG,"Today is ${today}")
+    }
 
 }
 
