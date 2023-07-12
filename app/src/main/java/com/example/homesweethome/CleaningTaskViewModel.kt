@@ -24,6 +24,7 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
     * Now replicate each date 4 times, so you have a list of 120. Now you have two lists.
     * Assign a random date from the second list (120 dates = 30x4) to each item in the 1st list
     * (120 tasks = 10X10 + 5x4) to prepare a list of 120 entities to put in DB.
+    *
     * */
     private val groupATasks = listOf(
         "Make beds",
