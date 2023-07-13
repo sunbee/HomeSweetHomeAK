@@ -147,16 +147,6 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
         _selectedOption.value = option
     }
 
-    private var _selectedListToShow = MutableStateFlow<List<CleaningTask>>(emptyList())
-    val selectedListToShow: StateFlow<List<CleaningTask>> = _selectedListToShow
-    fun setListToShow(option: String) {
-        _selectedListToShow = when (option) {
-            "ALL" -> _incompleteTasks
-            "TODAY" -> _incompleteTasksToday
-            else -> MutableStateFlow(emptyList())
-        }
-    }
-
     private val _incompleteTasksToday = MutableStateFlow<List<CleaningTask>>(emptyList())
     val incompleteTasksToday: StateFlow<List<CleaningTask>> = _incompleteTasksToday.asStateFlow()
 
