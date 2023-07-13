@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -164,6 +165,27 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
                 }
         }
         Log.d(TAG,"Today is ${today}")
+    }
+
+    /*
+    * EVENT-HANDLER
+    * WHEN a cleaning task is marked complete THEN update DB and refresh UI
+    *
+    *
+    * WHEN a cleaning task is marked complete.. (checkbox is checked)
+    *
+    * THEN update DB and refresh UI
+    * */
+    fun updateTaskCompletionStatus(taskId: Long, isCompleted: Boolean) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val task = cleaningTaskDao.getTaskById(taskId)
+                task?.let {
+                    it.isCompleted = isCompleted
+                    cleaningTaskDao.updateTask(it)
+                }
+            }
+        }
     }
 
 }

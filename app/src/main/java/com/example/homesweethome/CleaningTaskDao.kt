@@ -29,5 +29,8 @@ interface CleaningTaskDao {
 
     @Update
     fun updateTask(cleaningTask: CleaningTask)
+
+    @Query("SELECT * FROM cleaning_tasks WHERE taskId = :taskId")
+    fun getTaskById(taskId: Long): CleaningTask
 }
 
