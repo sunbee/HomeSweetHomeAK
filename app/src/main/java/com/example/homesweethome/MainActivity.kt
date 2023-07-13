@@ -79,8 +79,6 @@ fun GreetingPreview() {
 
 @Composable
 fun MainScreen(viewModel: CleaningTaskViewModel) {
-    val incompleteTasks by viewModel.selectedListToShow.collectAsState()
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -89,7 +87,7 @@ fun MainScreen(viewModel: CleaningTaskViewModel) {
 
         // Button to populate the database
         Button(
-            onClick = { viewModel.populateDatabase();  viewModel.setListToShow("ALL") },
+            onClick = { viewModel.populateDatabase();  viewModel.setOption("ALL") },
             modifier = Modifier.padding(top = 16.dp)
         ) {
             Text(text = "RESET")
@@ -97,16 +95,21 @@ fun MainScreen(viewModel: CleaningTaskViewModel) {
 
         // Button to show incomplete tasks for today
         Button(
-            onClick = { viewModel.setListToShow("TODAY") },
+            onClick = { viewModel.setOption("TODAY") },
             modifier = Modifier.padding(top = 8.dp)
         ) {
             Text(text = "TODAY")
         }
 
         // Display the list of incomplete tasks
-        TaskList(tasks = viewModel.incompleteTasksToday.collectAsState().value)
-    }
-}
+        if (viewModel.selectedOption.collectAsState().value == "ALL") {
+            TaskList(tasks = viewModel.incompleteTasks.collectAsState().value)
+        } else if (viewModel.selectedOption.collectAsState().value == "TODAY") {
+            TaskList(tasks = viewModel.incompleteTasksToday.collectAsState().value)
+
+        }
+    }  // end Column
+}  // end MainScreen
 
 @Composable
 fun TaskList(tasks: List<CleaningTask>) {
