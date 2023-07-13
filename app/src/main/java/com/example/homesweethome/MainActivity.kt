@@ -114,7 +114,6 @@ fun MainScreen(viewModel: CleaningTaskViewModel) {
                 viewModel = viewModel)
         } else if (viewModel.selectedOption.collectAsState().value == "TODAY") {
             TaskList(tasks = viewModel.incompleteTasksToday.collectAsState().value)
-
         }
     }  // end Column
 }  // end MainScreen
