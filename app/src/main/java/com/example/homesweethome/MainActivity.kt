@@ -79,50 +79,6 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MainScreen(viewModel: CleaningTaskViewModel) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-
-        // Button to populate the database
-        Button(
-            onClick = { viewModel.populateDatabase();  viewModel.setOption("ALL") },
-            modifier = Modifier.padding(top = 16.dp)
-        ) {
-            Text(text = "RESET")
-        }
-
-        // Button to show incomplete tasks for today
-        Button(
-            onClick = { viewModel.setOption("TODAY") },
-            modifier = Modifier.padding(top = 8.dp)
-        ) {
-            Text(text = "TODAY")
-        }
-
-        // Display the list of incomplete tasks
-        if (viewModel.selectedOption.collectAsState().value == "ALL") {
-            TaskListNew(
-                tasks = viewModel.incompleteTasks.collectAsState().value,
-                viewModel = viewModel)
-        } else if (viewModel.selectedOption.collectAsState().value == "TODAY") {
-            TaskList(tasks = viewModel.incompleteTasksToday.collectAsState().value)
-        }
-    }  // end Column
-}  // end MainScreen
-
-@Composable
-fun TaskList(tasks: List<CleaningTask>) {
-    LazyColumn {
-        items(tasks) { task ->
-            Text(text = task.taskName)
-        }
-    }
-}
-
-@Composable
 fun TaskListNew(tasks: List<CleaningTask>, viewModel: CleaningTaskViewModel) {
     LazyColumn(
         modifier = Modifier
