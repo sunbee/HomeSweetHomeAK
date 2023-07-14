@@ -21,6 +21,8 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
 
     private val TAG = "VIEW_MODEL"
     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val calendar = Calendar.getInstance()
+    val today = dateFormat.format(calendar.time)
 
     /*
     * EVENT-HANDLER:
@@ -186,6 +188,10 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
                 }
             }
         }
+    }
+
+    fun calculateProgress(): Float {
+        return 75.6f
     }
 
 }
