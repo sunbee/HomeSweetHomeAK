@@ -22,13 +22,13 @@ interface CleaningTaskDao {
     fun getAllTasks(): Flow<List<CleaningTask>>
 
     @Query("SELECT COUNT(*) FROM cleaning_tasks")
-    fun countAllTasks(): Flow<Int>
+    fun countAllTasks(): Long
 
     @Query("SELECT * FROM cleaning_tasks WHERE isCompleted = 1")
     fun getCompletedTasks(): Flow<List<CleaningTask>>
 
     @Query("SELECT COUNT(*) FROM cleaning_tasks WHERE isCompleted = 1")
-    fun countCompletedTasks(): Flow<Int>
+    fun countCompletedTasks(): Long
 
     @Query("SELECT * FROM cleaning_tasks WHERE isCompleted = 0")
     fun getIncompleteTasks(): Flow<List<CleaningTask>>

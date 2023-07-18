@@ -239,16 +239,24 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
     /*
     * WHEN progress is made THEN update progress bar */
 
+    private val _tasksTotal = mutableStateOf(120L)
+    val tasksTotal: State<Long> = _tasksTotal
+
     private val _progress = mutableStateOf(0.0f)
     val progress: State<Float> = _progress
 
     fun calculateProgress(reset: Boolean) {
-        if (reset) {
-            _progress.value = 0.0f
-        } else {
-            _progress.value = (120.0f - incompleteTasks.value.size) / 120.0f
+        viewModelScope.launch(Dispatchers.IO) {
+            _tasksTotal.value = cleaningTaskDao.countAllTasks()
+            withContext(Dispatchers.Main) {
+                if (reset) {
+                    _progress.value = 0.0f
+                } else {
+                    _progress.value = (tasksTotal.value.toFloat() - incompleteTasks.value.size) / tasksTotal.value
+                }
+                Log.d(TAG, "Progress: ${progress.value} with Incomplete: ${incompleteTasks.value.size}")
+            }
         }
-        Log.d(TAG, "Progress: ${progress.value} with Incomplete: ${incompleteTasks.value.size}")
     }
 
 }
