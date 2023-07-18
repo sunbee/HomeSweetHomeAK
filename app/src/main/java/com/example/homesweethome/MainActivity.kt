@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -79,50 +80,8 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun TaskListNew(tasks: List<CleaningTask>, viewModel: CleaningTaskViewModel) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    ) {
-        items(tasks) { task ->
-            TaskItem(task = task, viewModel)
-            Divider(
-                color = Color.LightGray,
-                thickness = 1.dp,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun TaskItem(task: CleaningTask, viewModel: CleaningTaskViewModel) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        Checkbox(
-            checked = task.isCompleted,
-            onCheckedChange = { isChecked ->
-                // Update the task's completion status in the database
-                // based on the checkbox state
-                viewModel.updateTaskCompletionStatus(task.taskId, isChecked)
-            },
-            modifier = Modifier.padding(end = 16.dp)
-        )
-        Text(
-            text = task.taskName,
-            style = MaterialTheme.typography.bodyMedium
-        )
-    }
-}
-
-@Composable
 fun MainScreenNew(viewModel: CleaningTaskViewModel) {
-    val progress = viewModel.calculateProgress()
+    val progress = viewModel.progress.value
 
     Box(
         modifier = Modifier
@@ -173,7 +132,9 @@ fun MainScreenNew(viewModel: CleaningTaskViewModel) {
 fun ProgressBar(progress: Float) {
     LinearProgressIndicator(
         progress,
-        Modifier.fillMaxWidth(),
+        Modifier
+            .fillMaxWidth()
+            .height(12.dp),
         Color.White,
         Color.LightGray
     )
