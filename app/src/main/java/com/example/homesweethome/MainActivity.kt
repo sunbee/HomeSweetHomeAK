@@ -81,7 +81,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainScreenNew(viewModel: CleaningTaskViewModel) {
-    val progress = viewModel.progress.value
+    val progress = viewModel.progress.collectAsState().value
 
     Box(
         modifier = Modifier

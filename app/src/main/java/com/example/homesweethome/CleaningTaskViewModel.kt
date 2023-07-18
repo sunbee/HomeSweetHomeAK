@@ -8,10 +8,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -121,9 +124,6 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
         viewModelScope.launch(Dispatchers.IO) {
             cleaningTaskDao.deleteAllTasks()
             cleaningTaskDao.insertAll(cleaningTasks)
-            withContext(Dispatchers.Main) {
-                calculateProgress(true)
-            }
         }
     }
 
@@ -146,20 +146,50 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
     *   selectedOption
     *   incompleteTasks
     */
-    private val _incompleteTasks = MutableStateFlow<List<CleaningTask>>(emptyList())
-    val incompleteTasks: StateFlow<List<CleaningTask>> = _incompleteTasks.asStateFlow()
+
 
     init {
         observeIncompleteTasks()
         observeIncompleteTasksTodayChanges()
+        observeAllTasks()
     }
 
+    private val _incompleteTasks = MutableStateFlow<List<CleaningTask>>(emptyList())
+    val incompleteTasks: StateFlow<List<CleaningTask>> = _incompleteTasks.asStateFlow()
     private fun observeIncompleteTasks() {
         viewModelScope.launch {
             cleaningTaskDao.getIncompleteTasks().collect { tasks ->
                 _incompleteTasks.update { tasks }
             }
         }
+    }
+
+    val _allTasks: MutableStateFlow<List<CleaningTask>> = MutableStateFlow(emptyList())
+    val allTasks: StateFlow<List<CleaningTask>> = _allTasks.asStateFlow()
+    private fun observeAllTasks() {
+        viewModelScope.launch {
+            cleaningTaskDao.getAllTasks().collect() { tasks->
+                _allTasks.update { tasks }
+            }
+        }
+    }
+
+    private val _incompleteTasksToday = MutableStateFlow<List<CleaningTask>>(emptyList())
+    val incompleteTasksToday: StateFlow<List<CleaningTask>> = _incompleteTasksToday.asStateFlow()
+    fun observeIncompleteTasksTodayChanges() {
+        val calendar = Calendar.getInstance()
+        val today = dateFormat.format(calendar.time)
+        viewModelScope.launch {
+            cleaningTaskDao.getTasksByDate(today)
+                .map { tasks ->
+                    tasks.filter { !it.isCompleted }
+                }
+                .collect { filteredTasks ->
+                    _incompleteTasksToday.update { filteredTasks }
+                    Log.d(TAG,"Today's tasks ${incompleteTasksToday.value}")
+                }
+        }
+        Log.d(TAG,"Today is ${today}")
     }
 
     /*
@@ -184,25 +214,6 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
     val selectedOption: StateFlow<String> = _selectedOption
     fun setOption(option: String) {
         _selectedOption.value = option
-    }
-
-    private val _incompleteTasksToday = MutableStateFlow<List<CleaningTask>>(emptyList())
-    val incompleteTasksToday: StateFlow<List<CleaningTask>> = _incompleteTasksToday.asStateFlow()
-
-    fun observeIncompleteTasksTodayChanges() {
-        val calendar = Calendar.getInstance()
-        val today = dateFormat.format(calendar.time)
-        viewModelScope.launch {
-            cleaningTaskDao.getTasksByDate(today)
-                .map { tasks ->
-                    tasks.filter { !it.isCompleted }
-                }
-                .collect { filteredTasks ->
-                    _incompleteTasksToday.update { filteredTasks }
-                    Log.d(TAG,"Today's tasks ${incompleteTasksToday.value}")
-                }
-        }
-        Log.d(TAG,"Today is ${today}")
     }
 
     /*
@@ -230,35 +241,19 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
                     cleaningTaskDao.updateTask(it)
                 }
             }
-            withContext(Dispatchers.Main) {
-                calculateProgress(false)
-            }
         }
     }
 
     /*
     * WHEN progress is made THEN update progress bar */
 
-    private val _tasksTotal = mutableStateOf(120L)
-    val tasksTotal: State<Long> = _tasksTotal
-
-    private val _progress = mutableStateOf(0.0f)
-    val progress: State<Float> = _progress
-
-    fun calculateProgress(reset: Boolean) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _tasksTotal.value = cleaningTaskDao.countAllTasks()
-            withContext(Dispatchers.Main) {
-                if (reset) {
-                    _progress.value = 0.0f
-                } else {
-                    _progress.value = (tasksTotal.value.toFloat() - incompleteTasks.value.size) / tasksTotal.value
-                }
-                Log.d(TAG, "Progress: ${progress.value} with Incomplete: ${incompleteTasks.value.size}")
-            }
+    val progress: StateFlow<Float> = combine(allTasks, incompleteTasks) { all, incomplete ->
+        if (all.isNotEmpty()) {
+            (all.size - incomplete.size) / all.size.toFloat()
+        } else {
+            0.0f
         }
-    }
-
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), 0.0f)
 }
 
 
