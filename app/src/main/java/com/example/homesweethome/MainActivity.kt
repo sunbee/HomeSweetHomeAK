@@ -186,7 +186,7 @@ fun TaskTile(task: CleaningTask, viewModel: CleaningTaskViewModel) {
         Checkbox(
             checked = task.isCompleted,
             onCheckedChange = { isChecked ->
-                viewModel.updateTaskCompletionStatus(task.taskId, isChecked)
+                viewModel.updateTaskCompletionStatus(task, isChecked)
             },
             modifier = Modifier.align(Alignment.BottomEnd)
         )

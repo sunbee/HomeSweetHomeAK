@@ -132,25 +132,26 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
     *
     * WHEN DB content changes..
     *   Dynamically update each list of cleaning tasks to sync with DB content
-    *   through an observable that wraps around the Dao C(R)UD function
-    *   that returns a type Flow. Initialize the observables in init block of this view model.
+    *   through an observable that wraps around the Dao C(R)UD function.
+    *   The Dao C(R)UD functions return a type Flow.
+    *   Initialize the observables in init block of this view model.
     *
     * THEN update the UI
-    *   onResetClick: lambda invokes the routine to repopulate DB content
-    *   and updates the selected option for list to show in UI
-    *   in the callback of the clickable reset icon
-    *   onTodayClick: lambda updates the selected option for list to show in UI
-    *   in callback of the clickable icon for today's cleaning tasks.
+    *   observeAllTasks() is the observer for all cleaning tasks
+    *   observeIncompleteTasks() is the observer for all pending cleaning tasks
+    *   observeIncompleteTasksToday() is the observer for today's pending cleaning tasks
     *
     * Actors:
-    *   selectedOption
-    *   incompleteTasks
+    *   allTasks is the list of all tasks
+    *   incompleteTasks is the list of pending tasks
+    *   incompleteTasksToday is the list to tasks due today
+    *
     */
 
 
     init {
         observeIncompleteTasks()
-        observeIncompleteTasksTodayChanges()
+        observeIncompleteTasksToday()
         observeAllTasks()
     }
 
@@ -176,7 +177,7 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
 
     private val _incompleteTasksToday = MutableStateFlow<List<CleaningTask>>(emptyList())
     val incompleteTasksToday: StateFlow<List<CleaningTask>> = _incompleteTasksToday.asStateFlow()
-    fun observeIncompleteTasksTodayChanges() {
+    fun observeIncompleteTasksToday() {
         val calendar = Calendar.getInstance()
         val today = dateFormat.format(calendar.time)
         viewModelScope.launch {
@@ -193,21 +194,29 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
     }
 
     /*
-    * EVENT-HANDLER
-    * WHEN button TODAY clicked THEN fetch today's incomplete cleaning tasks to show in UI.
+    * EVENT-HANDLER(S):
+    * WHEN clickable icon clicked THEN show corresponding cleaning tasks in UI.
     *
-    * WHEN button TODAY clicked.. (click event of button)
-    *   Set the state var that selects which list of cleaning tasks to show in the UI.
-    *   Implement a lambda in MainActivity to update the state var.
-    *   Pass the lambda to the composable FloatingActionBar
-    *   for setting as the callback of the clickable reset icon.
+    * WHEN clickable icon clicked.. (click event)
+    *   User selects which list of cleaning tasks to show in the UI
+    *   by clicking on an icon in the floating action bar.
+    *   Track the selected option with a state var managed by the event-handlers.
+    *   Then use it when invoking the composable in a conditional statement
+    *   to show the list according to the selected option. For each click action
+    *   (e.g. reset) implement a lambda in MainActivity as callback.
+    *   Pass the lambdas to the composable floating action bar
+    *   to use with the respective clickable icons.
     *
     * THEN fetch today's incomplete cleaning tasks to show in UI..
     *   setOption() is the function in view model to update the selected option
+    *   onResetClick: lambda invokes the routine to repopulate DB content
+    *   and updates the selected option for list to show in UI
+    *   in the callback of the clickable reset icon
+    *   onTodayClick: lambda updates the selected option for list to show in UI
+    *   in callback of the clickable icon for today's cleaning tasks.
     *
     * Actors:
     *   selectedOption
-    *   incompleteTasksToday
     *
     * */
     private val _selectedOption = MutableStateFlow<String>("ALL")
@@ -223,7 +232,7 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
     * WHEN a cleaning task is marked complete.. (checkbox is checked)
     *   The checkbox composable has an onCheckedChange lambda that invokes the
     *   view model wrapper around Dao function to CR(U)D and mark a task as completed.
-    *   The composable receives the cleaning task and uses the task ID to locate and
+    *   The parent composable box receives the cleaning task and uses the task ID to locate and
     *   retrieve the task, modify it and then update the DB.
     *
     * THEN update DB and refresh UI
@@ -232,10 +241,9 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
     *   updateTask()
     *
     * */
-    fun updateTaskCompletionStatus(taskId: Long, isCompleted: Boolean) {
+    fun updateTaskCompletionStatus(task: CleaningTask, isCompleted: Boolean) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val task = cleaningTaskDao.getTaskById(taskId)
                 task?.let {
                     it.isCompleted = isCompleted
                     cleaningTaskDao.updateTask(it)
@@ -245,7 +253,21 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
     }
 
     /*
-    * WHEN progress is made THEN update progress bar */
+    * EVENT-HANDLER:
+    * WHEN progress is made THEN update progress bar
+    *
+    * WHEN progress is made.. (data change)
+    *   Take the two flows, one for the list of all tasks,
+    *   the other for the list of incomplete tasks, and combine them
+    *   to calculate progress as a derivative flow.
+    *   Calculate progress from arithmetic with the size of the two lists.
+    *
+    * THEN update progress bar..
+    *   combine()
+    *
+    * Actors:
+    *   progress
+    * */
 
     val progress: StateFlow<Float> = combine(allTasks, incompleteTasks) { all, incomplete ->
         if (all.isNotEmpty()) {
