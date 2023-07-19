@@ -109,7 +109,7 @@ fun MainScreenNew(viewModel: CleaningTaskViewModel) {
                 modifier = Modifier.padding(bottom = 16.dp)
             )
             ProgressBar(progress)
-            if (viewModel.selectedOption.collectAsState().value == "ALL") {
+            if (viewModel.selectedOption.value == "ALL") {
                 GridTaskList(
                     tasks = viewModel.incompleteTasks.collectAsState().value,
                     viewModel = viewModel)
@@ -137,7 +137,8 @@ fun ProgressBar(progress: Float) {
         progress,
         Modifier
             .fillMaxWidth()
-            .height(12.dp),
+            .height(18.dp)
+            .padding(8.dp, 5.dp),
         Color.White,
         Color.LightGray
     )
@@ -198,9 +199,9 @@ fun TaskTile(task: CleaningTask, viewModel: CleaningTaskViewModel) {
 
 @Composable
 fun FloatingActionBar(
-        onResetClick: () -> Unit,
         onTodayClick: () -> Unit,
         onPendingClick: () -> Unit,
+        onResetClick: () -> Unit,
         modifier: Modifier) {
     Box(
         modifier = modifier
@@ -224,7 +225,7 @@ fun FloatingActionBar(
                     tint = Color.White
                 )
             }
-            IconButton(onClick = { onPendingClick }) {
+            IconButton(onClick = onPendingClick) {
                 Icon(
                     imageVector = Icons.Filled.CalendarViewWeek,
                     contentDescription = "Pending Tasks",

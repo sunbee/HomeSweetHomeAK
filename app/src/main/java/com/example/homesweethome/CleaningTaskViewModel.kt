@@ -219,10 +219,11 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
     *   selectedOption
     *
     * */
-    private val _selectedOption = MutableStateFlow<String>("ALL")
-    val selectedOption: StateFlow<String> = _selectedOption
+    private val _selectedOption = mutableStateOf("ALL")
+    val selectedOption: State<String> = _selectedOption
     fun setOption(option: String) {
         _selectedOption.value = option
+        Log.d(TAG, "Clicked to select ${selectedOption.value}")
     }
 
     /*
