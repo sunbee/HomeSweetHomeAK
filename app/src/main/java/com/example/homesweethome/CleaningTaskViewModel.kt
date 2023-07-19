@@ -218,7 +218,7 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
     *   selectedOption
     *
     * */
-    private val _selectedOption = mutableStateOf("ALL")
+    private val _selectedOption = mutableStateOf("TODAY")
     val selectedOption: State<String> = _selectedOption
     fun setOption(option: String) {
         _selectedOption.value = option
