@@ -148,7 +148,6 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
     *
     */
 
-
     init {
         observeIncompleteTasks()
         observeIncompleteTasksToday()
