@@ -18,12 +18,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.CalendarViewDay
+import androidx.compose.material.icons.filled.CalendarViewWeek
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -89,6 +90,7 @@ fun MainScreenNew(viewModel: CleaningTaskViewModel) {
             .background(Color.Blue)
     ) {
         Column(
+            verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth()
@@ -116,14 +118,15 @@ fun MainScreenNew(viewModel: CleaningTaskViewModel) {
                     tasks = viewModel.incompleteTasksToday.collectAsState().value,
                     viewModel = viewModel)
             }
-
         }
         FloatingActionBar(
+            onTodayClick = { viewModel.setOption("TODAY") },
+            onPendingClick = { viewModel.setOption("ALL") },
             onResetClick = {
                 viewModel.populateDatabase()
                 viewModel.setOption("ALL")
             },
-            onTodayClick = { viewModel.setOption("TODAY") }
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
 }
@@ -194,26 +197,53 @@ fun TaskTile(task: CleaningTask, viewModel: CleaningTaskViewModel) {
 }
 
 @Composable
-fun FloatingActionBar(onResetClick: () -> Unit, onTodayClick: () -> Unit) {
-    Row(
-        horizontalArrangement = Arrangement.End,
-        modifier = Modifier
+fun FloatingActionBar(
+        onResetClick: () -> Unit,
+        onTodayClick: () -> Unit,
+        onPendingClick: () -> Unit,
+        modifier: Modifier) {
+    Box(
+        modifier = modifier
             .fillMaxWidth()
             .padding(16.dp)
+            .background(Color.Magenta.copy(alpha = 0.5f))
     ) {
-        IconButton(onClick = onResetClick) {
-            Icon(
-                Icons.Filled.Home,
-                contentDescription = "Reset",
-                tint = Color.White
-            )
-        }
-        IconButton(onClick = onTodayClick) {
-            Icon(
-                Icons.Filled.Info,
-                contentDescription = "Today",
-                tint = Color.White
-            )
-        }
-    }
+        Row(
+            horizontalArrangement = Arrangement.SpaceAround,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            IconButton(onClick = onTodayClick) {
+                Icon(
+                    imageVector = Icons.Filled.CalendarViewDay,
+                    contentDescription = "Today's Tasks",
+                    modifier = Modifier
+                        .size(36.dp)
+                        .padding(5.dp),
+                    tint = Color.White
+                )
+            }
+            IconButton(onClick = { onPendingClick }) {
+                Icon(
+                    imageVector = Icons.Filled.CalendarViewWeek,
+                    contentDescription = "Pending Tasks",
+                    modifier = Modifier
+                        .size(36.dp)
+                        .padding(5.dp),
+                    tint = Color.White
+                )
+            }
+            IconButton(onClick = onResetClick) {
+                Icon(
+                    imageVector = Icons.Filled.Autorenew,
+                    contentDescription = "Reset Cycle",
+                    modifier = Modifier
+                        .size(36.dp)
+                        .padding(5.dp),
+                    tint = Color.White
+                )  // end ICON
+            }  // end ICON BUTTON
+        }  // end ROW
+    }  // end BOX
 }
