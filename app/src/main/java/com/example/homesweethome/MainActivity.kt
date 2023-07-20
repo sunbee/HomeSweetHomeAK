@@ -32,13 +32,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.room.Room
 import com.example.homesweethome.ui.theme.HomeSweetHomeTheme
+import com.example.homesweethome.ui.theme.TileCanvas
 
 class MainActivity : ComponentActivity() {
 
@@ -175,6 +178,7 @@ fun TaskTile(task: CleaningTask, viewModel: CleaningTaskViewModel) {
             .size(150.dp)
             .background(color, RoundedCornerShape(8.dp))
     ) {
+        TileCanvas()
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
