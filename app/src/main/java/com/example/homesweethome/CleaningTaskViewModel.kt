@@ -98,11 +98,11 @@ class CleaningTaskViewModel(private val cleaningTaskDao : CleaningTaskDao) : Vie
         calendar.add(Calendar.DAY_OF_MONTH, 1) // Start from tomorrow
         val dates = mutableListOf<Calendar>()
 
-        repeat(30) {
-            repeat(4) {
+        repeat(30) {outer_i ->
+            repeat(4) {inner_j ->
                 val clonedCalendar = calendar.clone() as Calendar
                 dates.add(clonedCalendar)
-                clonedCalendar.add(Calendar.DAY_OF_MONTH, 1)
+                clonedCalendar.add(Calendar.DAY_OF_MONTH, outer_i)
             }
         }
 
